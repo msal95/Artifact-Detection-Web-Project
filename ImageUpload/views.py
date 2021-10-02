@@ -1,0 +1,147 @@
+from django.shortcuts import render, HttpResponse
+from .models import ImageUpload
+from .serializers import ImageUploadSerializer
+from django.http import JsonResponse
+from rest_framework.parsers import JSONParser
+from django.contrib.auth.hashers import make_password
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status,generics,permissions
+
+
+
+from django.contrib.auth.hashers import check_password
+
+from django.shortcuts import render
+from django.core.files.storage import FileSystemStorage
+
+from pickle import load
+from numpy import argmax
+from keras.preprocessing.sequence import pad_sequences
+from keras.applications.vgg16 import VGG16
+from keras.preprocessing.image import load_img
+from keras.preprocessing.image import img_to_array
+from keras.applications.vgg16 import preprocess_input
+from keras.models import Model
+from keras.models import load_model
+
+import time
+
+
+@api_view(['GET', 'POST'])
+def images_list(request):
+    if(request.method == "GET"):
+        drivers = ImageUpload.objects.all()
+        serializer = ImageUploadSerializer(drivers, many=True)
+
+        return(Response(serializer.data))
+    
+    elif(request.method == "POST"):
+        data = request.data
+        
+        
+        # data["password"] = make_password(user_pass)
+        serializer = ImageUploadSerializer(data= data)
+
+        if(serializer.is_valid()):
+            serializer.save()
+            return(Response(serializer.data, status=status.HTTP_200_OK))
+
+        return(Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST))
+
+# extract features from each photo in the directory
+def extract_features(filename):
+	# load the model
+	model = VGG16()
+	# re-structure the model
+	model = Model(inputs=model.inputs, outputs=model.layers[-2].output)
+	# load the photo
+	image = load_img(filename, target_size=(224, 224))
+	# convert the image pixels to a numpy array
+	image = img_to_array(image)
+	# reshape data for the model
+	image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
+	# prepare the image for the VGG model
+	image = preprocess_input(image)
+	# get features
+	feature = model.predict(image, verbose=0)
+	return feature
+
+
+# generate a description for an image
+def generate_desc(model, tokenizer, photo, max_length):
+	# seed the generation process
+	in_text = 'startseq'
+	# iterate over the whole length of the sequence
+	for i in range(max_length):
+		# integer encode input sequence
+		sequence = tokenizer.texts_to_sequences([in_text])[0]
+		# pad input
+		sequence = pad_sequences([sequence], maxlen=max_length)
+		# predict next word
+		yhat = model.predict([photo,sequence], verbose=0)
+		# convert probability to integer
+		yhat = argmax(yhat)
+		# map integer to word
+		word = word_for_id(yhat, tokenizer)
+		# stop if we cannot map the word
+		if word is None:
+			break
+		# append as input for generating the next word
+		in_text += ' ' + word
+		# stop if we predict the end of the sequence
+		if word == 'endseq':
+			break
+	return in_text
+
+# map an integer to a word
+def word_for_id(integer, tokenizer):
+	for word, index in tokenizer.word_index.items():
+		if index == integer:
+			return word
+	return None
+
+
+
+@api_view(['GET', 'POST'])
+def images_list_description(request):
+    # imgFile = request.get('image')
+    
+    #print(request.FILES['image'])
+    fileObj = request.FILES['image']
+    fs = FileSystemStorage()
+    filePathName = fs.save(fileObj.name, fileObj)
+    filePathurl = fs.url(filePathName)
+    # load the tokenizer
+    tokenizer = load(open('Pickle/tokenizer.pkl', 'rb'))
+    # pre-define the max sequence length (from training)
+    max_length = 95
+    # load the model
+    model = load_model('Models/model-ep031-loss0.846-val_loss0.431.h5')
+    # load and prepare the photograph
+    photo = extract_features('media/'+filePathName)
+    # generate description
+    description = generate_desc(model, tokenizer, photo, max_length)
+    query = description
+    stopwords = ['startseq', 'endseq']
+    querywords = query.split()
+    resultWords = [word for word in querywords if word.lower() not in stopwords]
+    description = ' '.join(resultWords)
+	# description.slice(1,-1)
+    # print(description)
+    context = {'description':description, 'filePathurl':filePathurl}
+    
+    time.sleep(2)
+    print("FILE TYPE : {}".format(type(fileObj)))
+    data2 = {"picture" : fileObj ,
+            "description" : description    }
+        
+    # return(Response(context, status=status.HTTP_200_OK))
+
+    serializer = ImageUploadSerializer(data= data2)
+
+    if(serializer.is_valid()):
+        serializer.save()
+        return(Response(serializer.data, status=status.HTTP_200_OK))
+
+    return(Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST))

@@ -1,0 +1,75 @@
+{% extends 'personal/base.html' %}
+{% load static %}
+{% block content %}
+      <!-- ========== REVOLUTION SLIDER ========== -->
+      <div class="slider">
+        <div id="rev-slider-2" class="rev_slider color-slider op2" style="display:none" data-version="5.4.5">
+          <ul>
+            <!-- SLIDE NR. 1 -->
+            <li data-transition="crossfade">
+              <!-- MAIN IMAGE -->
+              <img src="{% static 'images/slider/slider1.jpg' %}" alt="Image" title="Image" data-bgposition="center center" data-bgfit="cover" data-bgrepeat="no-repeat" data-bgparallax="10" class="rev-slidebg" data-no-retina="">
+              
+            </li>
+            <!-- SLIDE NR. 2 -->
+            <li data-transition="crossfade">
+              <!-- MAIN IMAGE -->
+              <img src="{% static 'images/slider/slider3.jpg' %}" alt="Image" title="Image" data-bgposition="center center" data-bgfit="cover" data-bgrepeat="no-repeat" data-bgparallax="10" class="rev-slidebg" data-no-retina="">
+             
+            </li>
+            <!-- SLIDE NR. 3 -->
+            <li data-transition="crossfade">
+              <!-- MAIN IMAGE -->
+              <img src="{% static 'images/slider/slider2.jpg' %}" alt="Image" title="Image" data-bgposition="center center" data-bgfit="cover" data-bgrepeat="no-repeat" data-bgparallax="10" class="rev-slidebg" data-no-retina="">
+              
+            </li>
+          </ul>
+          <!-- ========== VERTICAL BOOKING FORM ========== -->
+          <div class="tp-static-layers">
+            <div
+              class="tp-static-layer tp-caption"
+              data-startslide="0"
+              data-endslide="99"
+              data-frames='[{"delay":2000,"speed":750,"sfxcolor":"#ffffff","sfx_effect":"blockfromleft","frame":"0","from":"z:0;","to":"o:1;","ease":"Power3.easeInOut"},{"delay":"wait","speed":500,"sfxcolor":"#ffffff","sfx_effect":"blocktoleft","frame":"999","to":"z:0;","ease":"Power4.easeOut"}]'
+              data-x="['right','right','center','center']"
+              data-hoffset="['15','15','0','0']"
+              data-y="['160','160','500','500']"
+              data-width="[368, 368, 768, 480]"
+              data-height="[auto, auto, auto, auto]"
+              style="z-index: 11;">
+              <div class="vertical-booking-form slider-booking-form" style="background: #01060180 !important; position: relative;">
+                <!-- ========== BOOKING NOTIFICATION ========== -->
+                <div id="booking-notification" class="notification"></div>
+                <h3 class="form-title" style="color: #fff;">Gandhara Civilization</h3>
+                <div class="inner">
+                  <form method="post" enctype="multipart/form-data" action="{% url 'result' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                      <!-- <label for="uploadImage" class="form-label" style="color: #fff; font-size: 18px;">Upload Image</label> -->
+                      <input type="file"  class="form-control" style="background: #fff0 !important;" name="image" id="image"  accept=".png, .jpg, .jpeg">
+                    </div>
+                    <button type="submit" value="submit" class="btn btn-book">Upload</button>
+                    <!-- <button type="submit" value="submit" name="" class="btn btn-primary">Submit</button> -->
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+
+    <!-- <section>
+        <form method="post" enctype="multipart/form-data" action="{% url 'result' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="exampleInputEmail1" class="form-label">Upload Image</label>
+              <input type="file" class="form-control" name="image" id="image">
+            </div>
+            <button type="submit" value="submit" name="" class="btn btn-primary">Submit</button>
+          </form>
+    </section> -->
+{% endblock content %}    
